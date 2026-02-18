@@ -1,0 +1,167 @@
+# ============================================================
+# NFA Pipeline Configuration
+# ============================================================
+
+pipeline:
+  name: "NFA Data Pipeline"
+  version: "1.0.0"
+  description: "National Film Awards scraping and data pipeline"
+
+# ----------------------------------------------------------
+# Scraping Configuration
+# ----------------------------------------------------------
+scraper:
+  base_url: "https://en.wikipedia.org"
+  awards_url: "https://en.wikipedia.org/wiki/{ordinal}_National_Film_Awards"
+  # Year range: film_year (films released this year)
+  # film_year=2000 → 48th NFA, ..., film_year=2023 → 71st NFA
+  start_year: 2000
+  end_year: 2023
+  # HTTP settings
+  request_timeout: 30           # seconds
+  request_delay_min: 1.0        # min seconds between requests (polite crawling)
+  request_delay_max: 3.0        # max seconds between requests
+  max_retries: 3
+  retry_backoff_factor: 2.0     # exponential backoff multiplier
+  # Headers to mimic a real browser
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  # Session pool
+  max_concurrent_requests: 3
+  respect_robots_txt: true
+
+# ----------------------------------------------------------
+# Data Paths
+# ----------------------------------------------------------
+paths:
+  data_dir: "data"
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  logs_dir: "data/logs"
+  cache_dir: "data/cache"
+  output_excel: "data/processed/nfa_awards.xlsx"
+  output_csv: "data/processed/nfa_awards.csv"
+  output_json: "data/processed/nfa_awards.json"
+  checkpoint_file: "data/cache/checkpoint.json"
+
+# ----------------------------------------------------------
+# Transformation Rules
+# ----------------------------------------------------------
+transformer:
+  # Fields to normalize
+  strip_whitespace: true
+  normalize_unicode: true
+  title_case_fields:
+    - film_title
+    - director
+    - category
+    - awardee
+  # Language normalization map
+  language_aliases:
+    "hindi": "Hindi"
+    "tamil": "Tamil"
+    "telugu": "Telugu"
+    "malayalam": "Malayalam"
+    "kannada": "Kannada"
+    "bengali": "Bengali"
+    "marathi": "Marathi"
+    "odia": "Odia"
+    "oriya": "Odia"
+    "punjabi": "Punjabi"
+    "assamese": "Assamese"
+    "gujarati": "Gujarati"
+    "urdu": "Urdu"
+    "english": "English"
+
+# ----------------------------------------------------------
+# Validation Rules
+# ----------------------------------------------------------
+validator:
+  required_fields:
+    - ceremony_year
+    - category
+    - film_title
+  year_min: 1954              # First NFA year
+  year_max: 2030
+  max_film_title_length: 500
+  max_director_length: 200
+  # Warn (not fail) if award count per year is outside this range
+  expected_awards_per_year_min: 30
+  expected_awards_per_year_max: 200
+  # Fail if completeness drops below this threshold
+  completeness_threshold: 0.70
+
+# ----------------------------------------------------------
+# Storage Configuration
+# ----------------------------------------------------------
+storage:
+  sqlite:
+    enabled: true
+    path: "data/processed/nfa_awards.db"
+    pragmas:
+      journal_mode: "WAL"
+      synchronous: "NORMAL"
+      cache_size: -64000       # 64 MB cache
+  excel:
+    enabled: true
+    freeze_panes: true
+    auto_filter: true
+    sheet_name: "NFA Awards"
+    summary_sheet: true
+  csv:
+    enabled: true
+    encoding: "utf-8-sig"      # BOM for Excel compatibility
+    delimiter: ","
+  json:
+    enabled: true
+    indent: 2
+  per_run_output_folder: true   # Create timestamped subfolder under processed/ each run
+
+# ----------------------------------------------------------
+# Logging Configuration
+# ----------------------------------------------------------
+logging:
+  level: "INFO"                 # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  format: "%(asctime)s | %(levelname)-8s | %(name)-25s | %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+  file:
+    enabled: true
+    path: "data/logs/pipeline.log"
+    max_bytes: 10485760         # 10 MB
+    backup_count: 5
+    encoding: "utf-8"
+  console:
+    enabled: true
+    colorize: true
+
+# ----------------------------------------------------------
+# Cache Configuration
+# ----------------------------------------------------------
+cache:
+  enabled: true
+  ttl_hours: 24                 # Re-scrape after 24 hours
+  strategy: "disk"              # disk | memory | none
+
+# ----------------------------------------------------------
+# Notifications (optional)
+# ----------------------------------------------------------
+notifications:
+  enabled: false
+  on_completion: false
+  on_error: false
+
+# ── Enrichment sources ────────────────────────────────────────────────────────
+enrichment:
+  # OMDb API — get free key at https://www.omdbapi.com/apikey.aspx (1000 req/day)
+  # Set via env var: NFA_OMDB_API_KEY=your_key
+  omdb_api_key: "a944ef11"
+  omdb_enabled: true
+  omdb_delay: 0.15
+
+  # Serper API — get free key at https://serper.dev (2500 searches/month)
+  # Set via env var: NFA_SERPER_API_KEY=your_key
+  serper_api_key: 0739af7737641d2011ca397f8dda7ee4f08c3d8d
+  serper_enabled: true
+
+  # IMDb scraper — no key needed
+  imdb_enabled: true
+  imdb_delay: 1.0

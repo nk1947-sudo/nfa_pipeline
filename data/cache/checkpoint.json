@@ -1,0 +1,12 @@
+{
+  "failed": {
+    "2024": {
+      "reason": "HTTP fetch returned None",
+      "at": "2026-02-18T08:48:04.685390"
+    }
+  },
+  "done": [
+    2022
+  ],
+  "last_updated": "2026-02-18T08:58:24.290610"
+}

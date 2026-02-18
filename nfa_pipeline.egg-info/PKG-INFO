@@ -1,0 +1,348 @@
+Metadata-Version: 2.4
+Name: nfa-pipeline
+Version: 1.0.0
+Summary: National Film Awards data scraping and analysis pipeline
+Author: NFA Pipeline
+License: MIT
+Project-URL: Repository, https://github.com/your-org/nfa-pipeline
+Project-URL: Documentation, https://github.com/your-org/nfa-pipeline#readme
+Keywords: nfa,cinema,scraping,data-pipeline,india
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Internet :: WWW/HTTP :: Indexing/Search
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.31.0
+Requires-Dist: urllib3>=2.0.0
+Requires-Dist: beautifulsoup4>=4.12.0
+Requires-Dist: lxml>=4.9.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: openpyxl>=3.1.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.11.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.5.0; extra == "dev"
+Requires-Dist: types-requests; extra == "dev"
+Requires-Dist: types-PyYAML; extra == "dev"
+Requires-Dist: types-beautifulsoup4; extra == "dev"
+
+# NFA Pipeline 🎬
+
+A production-grade Python data pipeline for scraping, transforming, validating, and storing data from the **National Film Awards (NFA)** website hosted by the Directorate of Film Festivals (DFF), Government of India.
+
+---
+
+## Features
+
+| Feature | Details |
+|---|---|
+| **Extraction** | Multi-strategy HTML parser (tables → definition lists → heading heuristics) |
+| **Transformation** | Unicode normalisation, language aliasing, award-type inference, title casing |
+| **Validation** | Field-level + cross-field + batch-level checks with configurable thresholds |
+| **Storage** | SQLite (queryable), Excel (formatted workbook), CSV |
+| **Resumable** | JSON checkpoint — re-run after crash picks up where it left off |
+| **Polite scraping** | robots.txt compliance, random delay, exponential-backoff retries |
+| **On-disk cache** | TTL-based HTML caching — avoids re-hitting the server unnecessarily |
+| **Logging** | Rotating file + colourised console at configurable verbosity |
+| **Configuration** | Single YAML file with environment variable override support |
+| **CLI** | Full argparse CLI with `--years`, `--dry-run`, `--status`, `--force` |
+| **Tests** | pytest test suite with coverage |
+
+---
+
+## Project Structure
+
+```
+nfa_pipeline/
+│
+├── nfa_pipeline/                   # Main package
+│   ├── __init__.py
+│   ├── __main__.py                 # CLI entry point
+│   ├── pipeline.py                 # Orchestrator (Extract→Transform→Validate→Store)
+│   ├── config.py                   # Config loader + typed dataclasses
+│   ├── models.py                   # Pydantic data models (AwardRecord, ScrapeRun, YearPage)
+│   │
+│   ├── extractors/
+│   │   └── nfa_extractor.py        # HTML fetcher + multi-strategy parser
+│   │
+│   ├── transformers/
+│   │   └── record_transformer.py   # Cleaning, normalisation, enrichment
+│   │
+│   ├── validators/
+│   │   └── record_validator.py     # Field-level + batch validation
+│   │
+│   ├── storage/
+│   │   ├── sqlite_storage.py       # SQLite with WAL mode + UPSERT
+│   │   ├── excel_exporter.py       # Formatted Excel workbook (openpyxl)
+│   │   └── csv_exporter.py         # UTF-8 CSV with BOM
+│   │
+│   └── utils/
+│       ├── http_client.py          # Session + retries + cache + robots.txt
+│       ├── checkpoint.py           # Resumable run state
+│       └── logging_setup.py        # Rotating file + colour console logs
+│
+├── config/
+│   └── settings.yaml               # All pipeline configuration
+│
+├── tests/                          # pytest test suite
+│   ├── test_models.py
+│   ├── test_extractor.py
+│   ├── test_transformer.py
+│   ├── test_validator.py
+│   ├── test_storage.py
+│   └── test_checkpoint_config.py
+│
+├── scripts/
+│   └── run_pipeline.py             # Convenience runner
+│
+├── data/                           # Auto-created by pipeline
+│   ├── raw/                        # (reserved for raw HTML dumps)
+│   ├── processed/                  # nfa_awards.xlsx, nfa_awards.csv, nfa_awards.db
+│   ├── logs/                       # pipeline.log (rotating, 10 MB × 5)
+│   └── cache/                      # Cached HTML + checkpoint.json
+│
+├── pyproject.toml                  # Package metadata + tool config
+├── Makefile                        # Developer shortcuts
+└── README.md
+```
+
+---
+
+## Quick Start
+
+### 1. Install
+
+```bash
+# Clone the repo
+git clone https://github.com/your-org/nfa-pipeline.git
+cd nfa-pipeline
+
+# Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+
+# Install with dev dependencies
+pip install -e ".[dev]"
+# OR production only:
+pip install .
+```
+
+### 2. Run the Pipeline
+
+```bash
+# Full run — years 2000–2023
+python -m nfa_pipeline
+
+# Or using the Makefile shortcut
+make run
+```
+
+### 3. Check What Would Run (Dry Run)
+
+```bash
+python -m nfa_pipeline --dry-run
+# DRY RUN — would scrape 24 years: [2000, 2001, ..., 2023]
+```
+
+### 4. Run Specific Years
+
+```bash
+# Single years
+python -m nfa_pipeline --years 2015 2016 2017
+
+# Year range
+python -m nfa_pipeline --start-year 2010 --end-year 2015
+```
+
+---
+
+## CLI Reference
+
+```
+python -m nfa_pipeline [OPTIONS]
+
+Year selection:
+  --years YEAR [YEAR ...]    Specific ceremony years to scrape
+  --start-year YEAR          Start of year range
+  --end-year YEAR            End of year range
+
+Pipeline options:
+  --config FILE              Path to custom settings.yaml
+  --force                    Re-scrape even if already checkpointed
+  --log-level LEVEL          DEBUG | INFO | WARNING | ERROR (default: INFO)
+  --dry-run                  Show what would be scraped without running
+  --status                   Show checkpoint status and exit
+  --reset-checkpoint         Clear checkpoint (forces full re-run next time)
+```
+
+---
+
+## Configuration
+
+All settings live in `config/settings.yaml`. Key sections:
+
+```yaml
+scraper:
+  start_year: 2000
+  end_year: 2023
+  request_delay_min: 1.0      # Polite crawl delay (seconds)
+  request_delay_max: 3.0
+  max_retries: 3
+
+validator:
+  completeness_threshold: 0.70  # Warn if <70% of records pass validation
+
+storage:
+  sqlite:
+    enabled: true
+    path: "data/processed/nfa_awards.db"
+  excel:
+    enabled: true
+  csv:
+    enabled: true
+```
+
+### Environment Variable Overrides
+
+Any config value can be overridden without editing the YAML:
+
+```bash
+# Format: NFA__<SECTION>__<KEY>=value
+export NFA__SCRAPER__START_YEAR=2010
+export NFA__SCRAPER__END_YEAR=2015
+python -m nfa_pipeline
+```
+
+---
+
+## Output Files
+
+After a successful run, you'll find three files in `data/processed/`:
+
+| File | Format | Description |
+|---|---|---|
+| `nfa_awards.xlsx` | Excel | Three sheets: Awards, Summary, Invalid Records |
+| `nfa_awards.csv` | CSV | UTF-8 with BOM (opens natively in Excel) |
+| `nfa_awards.db` | SQLite | Queryable database with full-text indexes |
+
+### Excel Workbook Sheets
+
+**NFA Awards** — main data, one row per award:
+
+| Column | Description |
+|---|---|
+| Year | Ceremony year |
+| Film Title | Title as listed in award |
+| Language | Primary language of the film |
+| Award Category | Full category name |
+| Award Type | Golden Lotus / Silver Lotus / Certificate of Merit |
+| Director | Credited director(s) |
+| Awardee | Person(s) who received the award |
+| … | and more |
+
+**Summary** — yearly breakdown of award counts and languages.
+
+**Invalid Records** — records that failed validation, with error messages.
+
+---
+
+## Data Model
+
+```python
+class AwardRecord(BaseModel):
+    ceremony_year: int           # e.g. 2023
+    ceremony_number: int | None  # e.g. 70 (70th NFA)
+    category: str                # "Best Film — Golden Lotus"
+    category_normalized: str     # "best-film-golden-lotus"
+    film_title: str              # "Kantara"
+    film_language: str | None    # "Kannada"
+    film_year: int | None        # 2022
+    director: str | None         # "Rishab Shetty"
+    awardee: str | None          # Person who accepted the award
+    production_company: str | None
+    award_type: str | None       # "Golden Lotus" | "Silver Lotus" | "Certificate of Merit"
+    source_url: str | None
+    is_valid: bool
+    validation_errors: list[str]
+    validation_warnings: list[str]
+```
+
+---
+
+## Running Tests
+
+```bash
+# Run full test suite with coverage
+make test
+
+# Or directly
+pytest tests/ -v --cov=nfa_pipeline
+
+# Specific test file
+pytest tests/test_extractor.py -v
+```
+
+---
+
+## Developer Commands
+
+```bash
+make install-dev   # Install with all dev dependencies
+make test          # Run tests with coverage report
+make lint          # Run ruff linter
+make format        # Auto-format with black
+make typecheck     # Run mypy
+make status        # Show checkpoint status
+make clean         # Remove build artifacts
+```
+
+---
+
+## Architecture Decisions
+
+### Multi-Strategy Parser
+The NFA website's HTML structure varies significantly across years (ASP.NET postbacks, table layouts, definition lists). The extractor tries three strategies in order — tables → DL lists → heading blocks — falling back gracefully rather than failing entirely.
+
+### Checkpoint System
+Long scraping runs can fail mid-way. The checkpoint JSON file records which years completed successfully, so re-running the pipeline only fetches outstanding years.
+
+### Validation Levels
+* **Blocking errors** (e.g., missing required field) → record marked `is_valid=False`, still stored but flagged
+* **Warnings** (e.g., film_year > ceremony_year) → attached to record, never discard data
+
+### UPSERT Strategy
+SQLite uses `INSERT OR REPLACE` on the composite `record_id` primary key. Re-running the pipeline is safe and idempotent — existing records are updated, not duplicated.
+
+---
+
+## Extending the Pipeline
+
+### Add a new parser strategy
+Implement `_parse_custom(self, soup, year)` in `nfa_extractor.py` and add it to the fallback chain in `_parse_html()`.
+
+### Add a new storage backend
+Create `nfa_pipeline/storage/json_exporter.py`, implement `export(records)`, and call it in `pipeline.py._store()`.
+
+### Change the year range
+Edit `config/settings.yaml`:
+```yaml
+scraper:
+  start_year: 1954  # First NFA year
+  end_year: 2023
+```
+
+---
+
+## License
+
+MIT
