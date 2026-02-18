@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from difflib import SequenceMatcher
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -37,10 +38,12 @@ class OMDbExtractor:
         OMDb API key. Falls back to NFA_OMDB_API_KEY env var.
     """
 
-    def __init__(self, http_client, api_key: Optional[str] = None):
+    def __init__(self, http_client, api_key: Optional[str] = None,
+                 rss_extractor=None):
         self._http    = http_client
         self._api_key = api_key or os.environ.get("NFA_OMDB_API_KEY", "")
         self._cache: Dict[str, Optional[Dict]] = {}
+        self._rss = rss_extractor  # optional RSSExtractor for fallback enrichment
 
         if not self._api_key:
             logger.warning("[OMDb] No API key set — OMDb enrichment disabled. "
@@ -68,6 +71,13 @@ class OMDbExtractor:
         self._cache[cache_key] = result
         return result
 
+    # Titles that are Wikipedia metadata noise, not real films
+    _SKIP_TITLES = {
+        "awarded for", "awarded by", "presented by", "announced on",
+        "site", "official website", "producer", "director",
+        "feature films", "non-feature films", "unknown",
+    }
+
     def enrich_records_batch(self, records: List,
                              delay: float = 0.2) -> List:
         """
@@ -80,22 +90,47 @@ class OMDbExtractor:
             return records
 
         enriched = 0
+        rss_enriched = 0
         for rec in records:
             try:
-                data = self.enrich_record(rec.film_title, rec.film_year)
+                title = rec.film_title or ""
+                # Skip junk / placeholder titles
+                if title.lower() in self._SKIP_TITLES:
+                    logger.debug("[OMDb] Skipping junk title: %r", title)
+                    continue
+                if len(title) < 4:
+                    logger.debug("[OMDb] Skipping too-short title: %r", title)
+                    continue
+                data = self.enrich_record(title, rec.film_year)
                 if data:
                     self._apply_to_record(rec, data)
                     enriched += 1
+                elif self._rss:
+                    # ── RSS fallback: try to get at least a plot summary ──
+                    rss_data = self._rss.fetch(title, rec.film_year)
+                    if rss_data:
+                        if rss_data.get("plot_summary") and not rec.plot_summary:
+                            rec.plot_summary = rss_data["plot_summary"]
+                        if rss_data.get("release_date") and not rec.release_date:
+                            rec.release_date = rss_data["release_date"]
+                        rss_enriched += 1
+                        logger.debug("[RSS] Fallback enriched: %r", title)
                 time.sleep(delay)
             except Exception as exc:
                 logger.debug("[OMDb] Failed for %r: %s", rec.film_title, exc)
 
-        logger.info("[OMDb] Enriched %d / %d records", enriched, len(records))
+        logger.info("[OMDb] Enriched %d / %d records (RSS fallback: %d)",
+                    enriched, len(records), rss_enriched)
         return records
 
     def _fetch_by_title(self, title: str,
                         year: Optional[int] = None) -> Optional[Dict]:
-        """Search OMDb by title (and optionally year)."""
+        """Search OMDb by title (and optionally year).
+
+        When year is provided, we do NOT retry without year on failure —
+        the year-less retry causes wrong matches for short/ambiguous Indian
+        film titles that share names with unrelated foreign films.
+        """
         import requests
 
         params: Dict = {
@@ -111,22 +146,26 @@ class OMDbExtractor:
             resp.raise_for_status()
             data = resp.json()
 
-            if data.get("Response") == "True":
-                logger.debug("[OMDb] HIT: %s (%s) → imdb:%s rating:%s",
-                             title, year, data.get("imdbID"), data.get("imdbRating"))
-                return data
+            if data.get("Response") != "True":
+                logger.debug("[OMDb] MISS: %s (%s): %s",
+                             title, year, data.get("Error", "unknown"))
+                return None
 
-            # Retry without year if year-specific lookup failed
-            if year and data.get("Response") == "False":
-                params.pop("y")
-                resp2 = requests.get(OMDB_BASE, params=params, timeout=10)
-                data2 = resp2.json()
-                if data2.get("Response") == "True":
-                    return data2
+            # ── Confidence check: title similarity ────────────────────────
+            returned_title = data.get("Title", "")
+            ratio = SequenceMatcher(
+                None, title.lower(), returned_title.lower()
+            ).ratio()
+            if ratio < 0.4:
+                logger.debug(
+                    "[OMDb] Low confidence match discarded: %r vs %r (ratio=%.2f)",
+                    title, returned_title, ratio,
+                )
+                return None
 
-            logger.debug("[OMDb] MISS: %s (%s): %s",
-                         title, year, data.get("Error", "unknown"))
-            return None
+            logger.debug("[OMDb] HIT: %s (%s) → imdb:%s rating:%s (similarity=%.2f)",
+                         title, year, data.get("imdbID"), data.get("imdbRating"), ratio)
+            return data
 
         except Exception as exc:
             logger.warning("[OMDb] Request error for %r: %s", title, exc)

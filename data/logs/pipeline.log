@@ -517,3 +517,22 @@
 2026-02-18 03:58:24 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m |   Warnings     : 0
 2026-02-18 03:58:24 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m |   Status       : COMPLETED
 2026-02-18 03:58:24 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | ============================================================
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | NFA Pipeline v1.0.0 — initialised
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | Years: 2000–2023
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | ============================================================
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | Run 464d3547-03c9-4e24-9edd-7920e437683f started — 1 years requested
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [MultiSource] Sources configured:
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ Wikipedia API    (primary, always on)
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ Wikipedia HTML   (fallback, always on)
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ Serper API      (gap-fill, key=set)
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ OMDb API        (enrichment, key=set)
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ IMDb scraper     (fallback enrichment, always on)
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | Processing film_year=2020
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 1a] Wikipedia REST API
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.wikipedia_api_extractor[0m | [WikipediaAPI] film_year=2020 → 68th NFA
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.wikipedia_api_extractor[0m | [WikipediaAPI] film_year=2020: 74 records
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | film_year=2020: 74 NFA records extracted (source=wikipedia_api)
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 2] Serper: filling director for 56 records
+2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 2] Serper: filling language for 14 records

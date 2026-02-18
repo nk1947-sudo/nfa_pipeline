@@ -7,6 +7,7 @@ from .omdb_extractor import OMDbExtractor
 from .imdb_extractor import IMDbExtractor
 from .serper_extractor import SerperExtractor
 from .multi_source_extractor import MultiSourceExtractor
+from .rss_extractor import RSSExtractor
 
 __all__ = [
     "NFAExtractor",
@@ -16,4 +17,5 @@ __all__ = [
     "IMDbExtractor",
     "SerperExtractor",
     "MultiSourceExtractor",
+    "RSSExtractor",
 ]

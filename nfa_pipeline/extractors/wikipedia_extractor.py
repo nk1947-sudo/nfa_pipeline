@@ -50,6 +50,78 @@ _FEATURE    = re.compile(r"feature\s+film", re.I)
 _NONFEATURE = re.compile(r"non.?feature", re.I)
 _DIRECTOR_RE = re.compile(r"[Dd]irector\s*:\s*(.+?)(?:\s{2,}|\n|$)")
 
+# ── Junk patterns ─────────────────────────────────────────────────────────────
+
+# Year-range patterns like "1953–1960" or "2021–present"
+_YEAR_RANGE_RE = re.compile(r"^\d{4}[–\-]\d{4}$")
+_YEAR_PRESENT_RE = re.compile(r"^\d{4}[–\-]present$", re.I)
+
+# Patterns that match entire junk strings (case-insensitive)
+_JUNK_EXACT = re.compile(
+    r"^("
+    r"awarded\s+for|awarded\s+by|awarded\s+to"
+    r"|presented\s+by|presented\s+on|presented\s+at"
+    r"|announced\s+on"
+    r"|official\s+website|site"
+    r"|golden\s+lotus\s+awards?"
+    r"|silver\s+lotus\s+awards?(\s+\(regional\))?"
+    r"|discontinued\s+awards?"
+    r"|special\s+awards?"
+    r"|awards?\s+by\s+year"
+    r"|feature\s+films?"
+    r"|non.?feature\s+films?"
+    r"|writing\s+on\s+cinema"
+    r"|most\s+awards?"
+    r"|dadasaheb\s+phalke\s+award"
+    r"|lifetime\s+achievement"
+    r"|best\s+feature\s+film"
+    r"|best\s+non.?feature\s+film"
+    r"|best\s+book"
+    r"|best\s+film\s+critic"
+    r"|producer|director|jury|chairperson"
+    r")$",
+    re.I,
+)
+
+# Patterns that match anywhere in the string
+_JUNK_CONTAINS = re.compile(
+    r"languages\s+specified\s+in"
+    r"|second\s+best.*third\s+best"
+    r"|feature\s+film\s+promoting\s+national"
+    r"|non\s+feature\s+film\s+promoting"
+    r"|experimental\s+film.*industrial",
+    re.I,
+)
+
+
+def _is_junk(text: str) -> bool:
+    """Return True if *text* is Wikipedia metadata / section-header noise, not a real award entry."""
+    if not text:
+        return False
+    t = text.strip()
+    if not t:
+        return False
+    if _YEAR_RANGE_RE.match(t):
+        return True
+    if _YEAR_PRESENT_RE.match(t):
+        return True
+    if _JUNK_EXACT.match(t):
+        return True
+    if _JUNK_CONTAINS.search(t):
+        return True
+    return False
+
+
+# ── Known Indian languages for column-swap detection ─────────────────────────
+
+KNOWN_INDIAN_LANGUAGES = {
+    "hindi", "tamil", "telugu", "malayalam", "kannada", "bengali",
+    "marathi", "odia", "oriya", "punjabi", "assamese", "gujarati",
+    "urdu", "manipuri", "maithili", "konkani", "sanskrit", "bodo",
+    "dogri", "kashmiri", "santhali", "sindhi", "nepali", "english",
+    "bhojpuri", "rajasthani", "tiwa", "mishing", "karbi",
+}
+
 
 def infer_award_type(text: str) -> Optional[str]:
     if _GOLDEN.search(text): return "Golden Lotus"
@@ -94,6 +166,14 @@ class WikipediaExtractor:
     def _parse(self, html: str, film_year: int, url: str
                ) -> Tuple[List[AwardRecord], Optional[str]]:
         soup = BeautifulSoup(html, "html.parser")
+
+        # ── Problem 1: Remove infobox and navbox tables before parsing ────────
+        for tag in soup.find_all("table", class_=re.compile(r"infobox|vevent")):
+            tag.decompose()
+        for tag in soup.find_all("table", class_=re.compile(r"navbox|mw-collapsible")):
+            tag.decompose()
+
+        # Remove edit-section links and reference superscripts
         for tag in soup.find_all(["sup", "span"],
                                   class_=["mw-editsection", "reference"]):
             tag.decompose()
@@ -153,9 +233,16 @@ class WikipediaExtractor:
             if not cells:
                 continue
             if len(cells) == 1:
-                t = infer_award_type(cells[0].get_text(strip=True))
+                cell_text = cells[0].get_text(strip=True)
+                t = infer_award_type(cell_text)
                 if t:
                     cur_type = t
+                # Skip single-cell rows (section headers / junk dividers)
+                continue
+            # ── Problem 2: Skip rows where all cells are junk ─────────────
+            all_texts = [c.get_text(" ", strip=True) for c in cells]
+            if all(_is_junk(t) for t in all_texts if t):
+                logger.debug("[Wikipedia] Skipping all-junk row: %s", all_texts)
                 continue
             r = self._row_to_record(cells, col, film_year, section, cur_type)
             if r:
@@ -193,8 +280,38 @@ class WikipediaExtractor:
 
         category   = ct("category")
         film_title = ct("film_title")
+
+        # ── Problem 1 & 2: Junk filter ────────────────────────────────────────
+        cat_junk   = _is_junk(category or "")
+        title_junk = _is_junk(film_title or "")
+
+        if cat_junk and title_junk:
+            # Both are junk — skip the entire row
+            logger.debug("[Wikipedia] Skipping junk row: category=%r film_title=%r",
+                         category, film_title)
+            return None
+        if cat_junk:
+            category = None
+        if title_junk:
+            film_title = None
+
         if not category and not film_title:
             return None
+
+        # ── Problem 3: Language / film column swap ────────────────────────────
+        film_language = ct("film_language")
+        if (film_title
+                and film_title.strip().lower() in KNOWN_INDIAN_LANGUAGES
+                and category
+                and category.strip().lower() not in KNOWN_INDIAN_LANGUAGES):
+            # Columns are swapped: film_title slot has language, category slot has film
+            logger.debug("[Wikipedia] Swapping language/film: film_title=%r category=%r",
+                         film_title, category)
+            actual_film     = category
+            actual_language = film_title
+            film_title      = actual_film
+            film_language   = actual_language   # override whatever was in the language col
+            category        = None              # will be filled from section context below
 
         raw_awardee = ct("awardee") or ""
         director    = ct("director")
@@ -213,7 +330,7 @@ class WikipediaExtractor:
             film_year       = film_year,
             category        = (category or "Unknown").strip(),
             film_title      = (film_title or "Unknown").strip(),
-            film_language   = ct("film_language"),
+            film_language   = film_language,
             director        = director,
             awardee         = awardee,
             award_type      = award_type,
