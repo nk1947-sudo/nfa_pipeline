@@ -536,3 +536,84 @@
 2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | film_year=2020: 74 NFA records extracted (source=wikipedia_api)
 2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 2] Serper: filling director for 56 records
 2026-02-18 13:37:37 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 2] Serper: filling language for 14 records
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | ============================================================
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | NFA Pipeline v1.0.0 — initialised
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | Years: 2000–2023
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | ============================================================
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.pipeline    [0m | Run 518b1acc-1ada-43c7-b31f-cacfa78660f2 started — 11 years requested
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [MultiSource] Sources configured:
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ Wikipedia API    (primary, always on)
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ Wikipedia HTML   (fallback, always on)
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ Serper API      (gap-fill, key=set)
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ OMDb API        (enrichment, key=set)
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m |   ✓ IMDb scraper     (fallback enrichment, always on)
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | Processing film_year=2000
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 1a] Wikipedia REST API
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.wikipedia_api_extractor[0m | [WikipediaAPI] film_year=2000 → 48th NFA
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.wikipedia_api_extractor[0m | [WikipediaAPI] film_year=2000: 67 records
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | film_year=2000: 67 NFA records extracted (source=wikipedia_api)
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 2] Serper: filling director for 34 records
+2026-02-18 13:38:56 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 2] Serper: filling language for 10 records
+2026-02-18 13:40:42 | [32mINFO    [0m | [90mnfa_pipeline.extractors.omdb_extractor[0m | [OMDb] Enriched 23 / 67 records (RSS fallback: 0)
+2026-02-18 13:40:42 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 4] IMDb fallback: 44/67 records still missing IMDb data (66%)
+2026-02-18 13:40:42 | [32mINFO    [0m | [90mnfa_pipeline.extractors.imdb_extractor[0m | [IMDb] Enriching 44 records missing IMDb data
+2026-02-18 13:40:58 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Refugee+%28%22Panchhi+Nadiyaan%22%29+2000&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:41:24 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Lokpriya+2000&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:41:27 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Ajeeb+Ghar+2000&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:41:31 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Balgandharv+2000&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:41:33 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt1929373/
+2026-02-18 13:41:35 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt1929373/keywords
+2026-02-18 13:41:38 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt1929373/fullcredits
+2026-02-18 13:41:44 | [32mINFO    [0m | [90mnfa_pipeline.extractors.imdb_extractor[0m | [IMDb] Enriched 1 / 44 missing records
+2026-02-18 13:41:44 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | film_year=2000: DONE — 67 records, 24 with IMDb ID, 16 with rating
+2026-02-18 13:41:44 | [32mINFO    [0m | [90mnfa_pipeline.validators.record_validator[0m | ValidationReport: 67 records | 67 valid (100.0%) | 0 invalid | 0 warnings
+2026-02-18 13:41:44 | [32mINFO    [0m | [90mnfa_pipeline.utils.logging_setup[0m | [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░] Scraping years   9% (1/11) — year 2000 OK (67 records)
+2026-02-18 13:41:44 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-02-18 13:41:44 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | Processing film_year=2001
+2026-02-18 13:41:44 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 1a] Wikipedia REST API
+2026-02-18 13:41:44 | [32mINFO    [0m | [90mnfa_pipeline.extractors.wikipedia_api_extractor[0m | [WikipediaAPI] film_year=2001 → 49th NFA
+2026-02-18 13:41:45 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://en.wikipedia.org/api/rest_v1/page/html/49th_National_Film_Awards
+2026-02-18 13:41:46 | [32mINFO    [0m | [90mnfa_pipeline.extractors.wikipedia_api_extractor[0m | [WikipediaAPI] film_year=2001: 58 records
+2026-02-18 13:41:46 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | film_year=2001: 58 NFA records extracted (source=wikipedia_api)
+2026-02-18 13:41:46 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 2] Serper: filling director for 33 records
+2026-02-18 13:41:46 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 2] Serper: filling language for 8 records
+2026-02-18 13:43:21 | [32mINFO    [0m | [90mnfa_pipeline.extractors.omdb_extractor[0m | [OMDb] Enriched 15 / 58 records (RSS fallback: 0)
+2026-02-18 13:43:21 | [32mINFO    [0m | [90mnfa_pipeline.extractors.multi_source_extractor[0m | [Step 4] IMDb fallback: 43/58 records still missing IMDb data (74%)
+2026-02-18 13:43:21 | [32mINFO    [0m | [90mnfa_pipeline.extractors.imdb_extractor[0m | [IMDb] Enriching 43 records missing IMDb data
+2026-02-18 13:43:23 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Dweepa+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:43:27 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0250323/
+2026-02-18 13:43:29 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0250323/keywords
+2026-02-18 13:43:31 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0250323/fullcredits
+2026-02-18 13:43:36 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Thiladaanam+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:43:40 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Lagaan+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:43:42 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0169102/
+2026-02-18 13:43:46 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0169102/keywords
+2026-02-18 13:43:47 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0169102/fullcredits
+2026-02-18 13:43:53 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Bub+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:43:55 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0258470/
+2026-02-18 13:43:58 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0258470/keywords
+2026-02-18 13:44:02 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0258470/fullcredits
+2026-02-18 13:44:06 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Neythukaran+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:44:09 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt11188208/
+2026-02-18 13:44:12 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt11188208/keywords
+2026-02-18 13:44:15 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt11188208/fullcredits
+2026-02-18 13:44:19 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Mitr%2C+My+Friend+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:44:22 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0292113/
+2026-02-18 13:44:26 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0292113/keywords
+2026-02-18 13:44:29 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0292113/fullcredits
+2026-02-18 13:44:32 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Kutty+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:44:35 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0324232/
+2026-02-18 13:44:38 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0324232/keywords
+2026-02-18 13:44:40 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0324232/fullcredits
+2026-02-18 13:44:45 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=%E2%80%A2+Lagaan+%28%22Mitwa%22%29+%E2%80%A2+Dil+Chahta+Hain+%28%22Jaane+Kyon%22%29+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:44:47 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Udayageethavin+Azhagi+%28%22Pattu+Cholli%22%29+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:44:58 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Lagaan+%28%22Radha+Kaise+Na+Jale%22+and+%22Ghanan+Ghanan%22%29+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:45:01 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Lagaan+%28%22Ghanan+Ghanan%22%29+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:45:06 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Panoi-Jongki+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:45:10 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Atithi+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:45:13 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Dany+2001&s=tt&ttype=ft&ref_=fn_ft
+2026-02-18 13:45:16 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0139654/
+2026-02-18 13:45:18 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0139654/keywords
+2026-02-18 13:45:20 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/title/tt0139654/fullcredits
+2026-02-18 13:45:27 | [32mINFO    [0m | [90mnfa_pipeline.utils.http_client[0m | GET https://www.imdb.com/find/?q=Sonal+2001&s=tt&ttype=ft&ref_=fn_ft
