@@ -8,6 +8,8 @@ Orchestrates all data sources in priority order:
   3. Serper enrichment   — fills gaps (director, language) via Google Search
   4. OMDb API            — film metadata (IMDb rating, runtime, genres, etc.)
   5. IMDb scraper        — fallback for films OMDb misses
+  6. Newsdata.io         — last-resort: fills remaining nulls from news articles;
+                           sets "Unknown" for any field with no news hit
 
 Source selection is fully configurable. Each source degrades gracefully
 when its API key is missing or the request fails.
@@ -26,6 +28,7 @@ from .wikipedia_extractor import WikipediaExtractor
 from .omdb_extractor import OMDbExtractor
 from .imdb_extractor import IMDbExtractor
 from .serper_extractor import SerperExtractor
+from .newsdata_extractor import NewsdataExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +73,20 @@ class MultiSourceExtractor:
         # ── Enrichment: IMDb scraper ───────────────────────────────────────────
         self._imdb = IMDbExtractor(http_client)
 
+        # ── Enrichment: Newsdata.io (last resort) ─────────────────────────────
+        enr = getattr(cfg, "enrichment", None)
+        newsdata_key = (
+            getattr(enr, "newsdata_api_key", "")
+            or os.environ.get("NFA_NEWSDATA_API_KEY", "")
+        )
+        self._newsdata = NewsdataExtractor(
+            api_key=newsdata_key,
+            country=getattr(enr, "newsdata_country", "in"),
+            language=getattr(enr, "newsdata_language", "en"),
+            delay=getattr(enr, "newsdata_delay", 0.5),
+        )
+        self._newsdata_enabled = getattr(enr, "newsdata_enabled", True)
+
         self._log_sources()
 
     def _log_sources(self):
@@ -83,6 +100,11 @@ class MultiSourceExtractor:
                     "✓" if self._omdb.enabled else "✗ DISABLED",
                     "set" if self._omdb.enabled else "missing → set NFA_OMDB_API_KEY")
         logger.info("  ✓ IMDb scraper     (fallback enrichment, always on)")
+        logger.info("  %s Newsdata.io     (last-resort, key=%s)",
+                    "✓" if (self._newsdata.enabled and self._newsdata_enabled)
+                      else "✗ DISABLED",
+                    "set" if self._newsdata.enabled
+                      else "missing → set NFA_NEWSDATA_API_KEY")
 
     # ── Public API ─────────────────────────────────────────────────────────────
 
@@ -93,36 +115,58 @@ class MultiSourceExtractor:
         """
         logger.info("━" * 60)
         logger.info("Processing film_year=%d", film_year)
+        t0 = time.perf_counter()
 
         # ── Step 1: NFA award data from Wikipedia ─────────────────────────────
         page = self._extract_nfa_data(film_year)
+        t_wiki = time.perf_counter() - t0
 
         if not page.records:
             logger.warning("film_year=%d: No records from any NFA source", film_year)
+            logger.info("film_year=%d: TIMING — wiki=%.2fs | total=%.2fs",
+                        film_year, t_wiki, t_wiki)
             return page
 
         logger.info("film_year=%d: %d NFA records extracted (source=%s)",
                     film_year, len(page.records), page.source)
 
         # ── Step 2: Fill gaps via Serper (director, language) ─────────────────
+        t1 = time.perf_counter()
         if self._serper.enabled:
             page.records = self._fill_gaps_serper(page.records)
+        t_serper = time.perf_counter() - t1
 
         # ── Step 3: Enrich with OMDb API ──────────────────────────────────────
+        t2 = time.perf_counter()
         if self._omdb.enabled:
             page.records = self._omdb.enrich_records_batch(
                 page.records, delay=self._omdb_delay)
+        t_omdb = time.perf_counter() - t2
 
         # ── Step 4: IMDb fallback for records OMDb missed ─────────────────────
+        t3 = time.perf_counter()
         if self._should_use_imdb(page.records):
             page.records = self._imdb.enrich_records_batch(
                 page.records, delay=self._imdb_delay)
+        t_imdb = time.perf_counter() - t3
 
-        # Summary
-        with_imdb = sum(1 for r in page.records if getattr(r, "imdb_id", None))
+        # ── Step 5: Newsdata last-resort — fill remaining nulls ───────────────
+        t4 = time.perf_counter()
+        if self._newsdata_enabled and self._newsdata.enabled:
+            page.records = self._newsdata.enrich_records(page.records)
+        t_newsdata = time.perf_counter() - t4
+
+        t_total = time.perf_counter() - t0
+
+        # ── Summary ────────────────────────────────────────────────────────────
+        with_imdb   = sum(1 for r in page.records if getattr(r, "imdb_id", None))
         with_rating = sum(1 for r in page.records if getattr(r, "imdb_rating", None))
         logger.info("film_year=%d: DONE — %d records, %d with IMDb ID, %d with rating",
                     film_year, len(page.records), with_imdb, with_rating)
+        logger.info(
+            "film_year=%d: TIMING — wiki=%.2fs | serper=%.2fs | omdb=%.2fs | imdb=%.2fs | newsdata=%.2fs | total=%.2fs",
+            film_year, t_wiki, t_serper, t_omdb, t_imdb, t_newsdata, t_total,
+        )
 
         return page
 
@@ -147,13 +191,19 @@ class MultiSourceExtractor:
 
         # Try 1: Wikipedia REST API
         logger.info("[Step 1a] Wikipedia REST API")
+        t = time.perf_counter()
         page = self._wiki_api.extract_year(film_year)
+        logger.info("[Step 1a] Wikipedia REST API — %.2fs → %d records",
+                    time.perf_counter() - t, len(page.records))
         if page.records:
             return page
 
         # Try 2: Wikipedia HTML direct
         logger.info("[Step 1b] Wikipedia HTML direct (API failed or 0 records)")
+        t = time.perf_counter()
         page = self._wiki_html.extract_year(film_year)
+        logger.info("[Step 1b] Wikipedia HTML — %.2fs → %d records",
+                    time.perf_counter() - t, len(page.records))
         if page.records:
             return page
 

@@ -66,6 +66,15 @@ status:  ## Show checkpoint status
 reset:  ## Reset checkpoint (will re-scrape everything)
 	$(PYTHON) -m $(PKG) --reset-checkpoint
 
+update-incremental:  ## Incremental update — scrape missing years + fill null fields
+	$(PYTHON) -m $(PKG) --incremental
+
+update-enrich-only:  ## Re-enrich existing records with null fields (no re-scrape)
+	$(PYTHON) -m $(PKG) --incremental --enrich-only
+
+list-scans:  ## List all available scan folders and their DB status
+	$(PYTHON) -m $(PKG) --list-scans
+
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 
 clean:  ## Remove build artifacts and cache

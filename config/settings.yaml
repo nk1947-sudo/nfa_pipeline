@@ -165,3 +165,13 @@ enrichment:
   # IMDb scraper — no key needed
   imdb_enabled: true
   imdb_delay: 1.0
+
+  # Newsdata.io — last-resort enrichment (200 credits/day free)
+  # Runs as Step 5 after Wikipedia, Serper, OMDb, IMDb.
+  # Fills remaining null fields from news articles; sets "Unknown" if no article found.
+  # Get key at https://newsdata.io — Set via env var: NFA_NEWSDATA_API_KEY=your_key
+  newsdata_api_key: "8b3edf14297a4e1892cc249fad68b590"
+  newsdata_enabled: true
+  newsdata_delay: 0.5          # seconds between API calls (free tier: 200 credits/day)
+  newsdata_country: "in"       # restrict to Indian news sources
+  newsdata_language: "en"      # English articles only
